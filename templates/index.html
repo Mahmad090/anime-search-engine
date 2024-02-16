@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flask API Example</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    margin: 0;
+    padding: 0;
+}
+
+#container {
+    max-width: 800px;
+    margin: 20px auto;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    background-color: #fff;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+p {
+    font-size: 16px;
+    color: #333;
+    margin-bottom: 20px;
+    margin-left: 30px;
+    text-align: justify; /* Justify the text within the paragraph */
+}
+#simple{
+    margin-left: 20px; 
+}
+
+#simpleexp{
+    margin-left: 20px; 
+    cursor: pointer; 
+}
+ul, ol {
+    margin-left: 20px; /* Add some left margin to the lists for better readability */
+}
+
+#submitButton:active{
+    background-color: #ffffff !important; /* Add !important to override other styles if necessary */
+    color: #007bff !important; /* Add !important to override other styles if necessary */
+}
+h1 {
+    margin-left: 490px;
+    font-size: 34px;
+    color: #333;
+    margin-bottom: 20px;
+}
+
+.search-box {
+    margin-bottom: 20px;
+}
+#inputText{
+    margin-left: 365px;
+}
+input[type="text"] {
+    padding: 8px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    width: 38%;
+}
+
+button {
+    padding: 8px 20px;
+    font-size: 16px;
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+#animeList {
+    list-style-type: none;
+    padding: 0;
+}
+
+li {
+    padding: 10px;
+    background-color: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    margin-bottom: 10px;
+}
+
+a {
+    color: #333;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+#loadMoreButton {
+    display: block;
+    margin-top: 20px;
+    margin-left: 46%;
+}
+#loadingMessage {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.5);
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 5px;
+            display: none;
+        }
+        /* Styling for the container */
+        #container {
+            max-width: 600px; /* Adjust the maximum width as needed */
+            margin: 0 auto; /* Center the container */
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            background-color: #f9f9f9;
+        }
+
+        /* Styling for the list */
+        #animeList {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        /* Styling for each list item */
+        #animeList li {
+            margin-bottom: 10px;
+            background-color: #fff;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Styling for the links */
+        #animeList li a {
+            text-decoration: none;
+            color: #333;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    
+    <h1>Anime Search Engine</h1>
+    <p>Hello Everyone. Here is a simple Search Engine for Anime Where you just have to describe what type of anime you want to watch <br>Please keep in mind the following points while writing your prompt
+    <ul>
+        <li id="simple">Please prefer to list the main theme of the anime in simple words</li>
+        <li id="simple">If you do not want something like Nudity, Violence in the anime then simply do not mention it in prompt rather than writing it in negation</li>
+        <li id="simple">Please Wait for 2 min after clicking the Submit button</li>
+    </ul>
+    Here are some Example Prompts 
+    <ol>
+        <li id="simpleexp">I want an anime with intense action, dark themes, and complex characters. It should have mature content and explore the moral ambiguity of its characters and their actions. The anime should contain sex and nudity</li>
+        <li id="simpleexp">I am craving a laid-back anime where ordinary people have extraordinary powers. Show me their daily lives juggling work, relationships, and the occasional alien invasion or demon possession, all with a sprinkle of witty banter and awkward situations.</li>
+        <li id="simpleexp">I am looking for the anime in which male character fall in love with the female character but hide his feelings the anime should have comedy alongside romance</li>
+        <li id="simpleexp">I am looking for a story about pirates and adventure with a comedic twist</li>
+    </ol>
+    </p>
+    <input type="text" id="inputText" placeholder="Enter Your Prompt">
+    <div id="loadingMessage">Loading...</div>
+    <button id="submitButton">Submit</button>
+    <br><br>
+    <div id="container">
+        <ul id="animeList"></ul>
+    </div>
+    <button id="loadMoreButton" style="display:none;">Load More</button> 
+
+    <script>
+         var liElements = document.querySelectorAll('li#simpleexp');
+var inputText = document.getElementById('inputText');
+liElements.forEach(function(li) {
+    li.addEventListener('click', function() {
+        inputText.value = this.textContent;
+    });
+});
+        $(document).ready(function(){
+            var currentPage = 1;
+    
+            $('#submitButton').click(function(){
+                var inputText = $('#inputText').val();
+                $('#submitButton').prop('disabled', true);
+                $('#animeList').empty();
+                $('#loadingMessage').show();
+                $.ajax({
+                    type: "POST",
+                    url: "/process",
+                    data: JSON.stringify({text: inputText}),
+                    contentType: "application/json",
+                    success: function(response){
+                        displayAnimeData(response);
+                        $('#loadMoreButton').show().prop('disabled', false); // Show and enable Load More button
+                        currentPage = 2;
+                        $('#submitButton').prop('disabled', false).removeClass('focus');
+                        $('#loadingMessage').hide();
+                    },
+                    error: function(xhr, status, error){
+                        console.error("Error:", error);
+                        $('#submitButton').prop('disabled', false).removeClass('focus');
+                        $('#loadingMessage').hide();
+                    }
+                });
+            });
+    
+            $('#loadMoreButton').click(function(){
+                $(this).prop('disabled', true);
+                $('#loadingMessage').show();
+                $.ajax({
+                    type: "POST",
+                    url: "/process",
+                    data: JSON.stringify({text: $('#inputText').val(), page: currentPage}),
+                    contentType: "application/json",
+                    success: function(response){
+                        $('#loadingMessage').hide();
+                        if (response.trim() === "") {
+                            $('#loadMoreButton').text('No more data').prop('active', true);
+                        } else {
+                            displayAnimeData(response);
+                            currentPage++;
+                            $('#loadMoreButton').prop('active', false); // Enable Load More button after response
+                        }
+                    },
+                    error: function(xhr, status, error){
+                        console.error("Error:", error);
+                        $('#loadingMessage').hide();
+                    }
+                });
+            });
+    
+            function displayAnimeData(data) {
+                var animeList = JSON.parse(data);
+                var $animeList = $('#animeList');
+
+                animeList.forEach(function(anime) {
+                    var $animeListItem = $('<li>');
+                    var $animeLink = $('<a>').attr('href', anime.Link).text(anime.Name);
+                    $animeListItem.append($animeLink);
+                    $animeList.append($animeListItem);
+                });
+            }
+        });
+    </script>
+    
+    
+</body>
+
+</html>
