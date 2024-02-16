@@ -100,7 +100,18 @@ app = Flask(__name__)
 @app.route('/')
 def index():
     return render_template("index.html")
-
+current_page = 1
+@app.route('/process', methods=['POST'])
+def process():
+    global current_page
+    data = request.json
+    text = data['text']
+    with open('./UserPrompts.txt', 'a') as file:
+    # Write the text to the file
+        file.write(text)
+    jsonData = get_similarity(text, current_page)  # Pass the current page number to the function
+    current_page += 1  # Increment the page number for the next request
+    return jsonData
 
 if __name__ == '__main__':
     app.run(debug=True, port=os.getenv("PORT", default=5000))
