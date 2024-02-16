@@ -96,7 +96,7 @@ def get_similarity(prompt, page_number=1, items_per_page=10):
 
 app = Flask(__name__)
 
-
+CORS(app)
 @app.route('/')
 def index():
     return render_template("index.html")
