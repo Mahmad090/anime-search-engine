@@ -109,8 +109,10 @@ def process():
     # with open('./UserPrompts.txt', 'a') as file:
     # # Write the text to the file
     #     file.write(text)
+  
     jsonData = get_similarity(text, current_page)  # Pass the current page number to the function
     current_page += 1  # Increment the page number for the next request
+    print(jsonData)
     return jsonData
 
 if __name__ == '__main__':
