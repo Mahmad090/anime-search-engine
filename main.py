@@ -106,7 +106,7 @@ def process():
     global current_page
     data = request.json
     text = data['text']
-    with open('./UserPrompts.txt', 'a') as file:
+    with open('UserPrompts.txt', 'a') as file:
     # Write the text to the file
         file.write(text)
   
