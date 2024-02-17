@@ -6,9 +6,7 @@ nltk.download('stopwords')
 import re
 from nltk.corpus import stopwords
 from flask_cors import CORS
-data=pd.read_csv("refined_data.csv")
-# description_data=pd.read_csv("refined_data.csv")
-# image_data=pd.read_csv("Anime_image1_50.csv")
+data=pd.read_csv("refined_data2.csv")
 def slugify(text):
   text = text.lower().replace(" ", "-")
 
