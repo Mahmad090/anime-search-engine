@@ -147,16 +147,34 @@ a {
             color: #333;
             font-weight: bold;
         }
+         #social-icons {
+        position: absolute;
+        top: 10px;
+        right: 20px;
+    }
+
+    #social-icons a {
+        margin-left: 10px;
+    }
     </style>
 </head>
 <body>
     
     <h1>Anime Search Engine</h1>
+    <div id="social-icons">
+        <a href="https://www.kaggle.com/itsnobita" target="_blank">
+            <img src="https://www.vectorlogo.zone/logos/kaggle/kaggle-icon.svg" alt="Kaggle" width="30" height="30">
+        </a>
+        <a href="https://www.linkedin.com/in/muhammad-ahmad-698137263/" target="_blank">
+            <img src="https://img.icons8.com/?size=48&id=13930&format=png" alt="LinkedIn" width="30" height="30">
+        </a>
+    </div>
     <p>Hello Everyone. Here is a simple Search Engine for Anime Where you just have to describe what type of anime you want to watch <br>Please keep in mind the following points while writing your prompt
     <ul>
         <li id="simple">Please prefer to list the main theme of the anime in simple words</li>
         <li id="simple">If you do not want something like Nudity, Violence in the anime then simply do not mention it in prompt rather than writing it in negation</li>
         <li id="simple">Please Wait for 2 min after clicking the Submit button</li>
+        <li id="simple">Note :The data in only limited to 2500 animes only so it does not contain all animes</li>
     </ul>
     Here are some Example Prompts 
     <ol>
@@ -242,7 +260,7 @@ liElements.forEach(function(li) {
 
                 animeList.forEach(function(anime) {
                     var $animeListItem = $('<li>');
-                    var $animeLink = $('<a>').attr('href', anime.Link).text(anime.Name);
+                    var $animeLink = $('<a>').attr('href', anime.Link).attr('target', '_blank').text(anime.Name);
                     $animeListItem.append($animeLink);
                     $animeList.append($animeListItem);
                 });
