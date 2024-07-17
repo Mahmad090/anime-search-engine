@@ -3,272 +3,169 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Anime Search Engine</title>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <title>Voice Chat App</title>
     <style>
         body {
-    font-family: Arial, sans-serif;
-    background-color: #f4f4f4;
-    margin: 0;
-    padding: 0;
-}
-
-#container {
-    max-width: 800px;
-    margin: 20px auto;
-    padding: 20px;
-    border: 1px solid #ccc;
-    border-radius: 10px;
-    background-color: #fff;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-}
-p {
-    font-size: 16px;
-    color: #333;
-    margin-bottom: 20px;
-    margin-left: 30px;
-    text-align: justify; /* Justify the text within the paragraph */
-}
-#simple{
-    margin-left: 20px; 
-}
-
-#simpleexp{
-    margin-left: 20px; 
-    cursor: pointer; 
-}
-ul, ol {
-    margin-left: 20px; /* Add some left margin to the lists for better readability */
-}
-
-#submitButton:active{
-    background-color: #ffffff !important; /* Add !important to override other styles if necessary */
-    color: #007bff !important; /* Add !important to override other styles if necessary */
-}
-h1 {
-    margin-left: 490px;
-    font-size: 34px;
-    color: #333;
-    margin-bottom: 20px;
-}
-
-.search-box {
-    margin-bottom: 20px;
-}
-#inputText{
-    margin-left: 365px;
-}
-input[type="text"] {
-    padding: 8px;
-    font-size: 16px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    width: 38%;
-}
-
-button {
-    padding: 8px 20px;
-    font-size: 16px;
-    background-color: #007bff;
-    color: #fff;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-}
-
-button:hover {
-    background-color: #0056b3;
-}
-
-#animeList {
-    list-style-type: none;
-    padding: 0;
-}
-
-li {
-    padding: 10px;
-    background-color: #f9f9f9;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    margin-bottom: 10px;
-}
-
-a {
-    color: #333;
-    text-decoration: none;
-    font-weight: bold;
-}
-
-#loadMoreButton {
-    display: block;
-    margin-top: 20px;
-    margin-left: 46%;
-}
-#loadingMessage {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background-color: rgba(0, 0, 0, 0.5);
-            color: #fff;
-            padding: 10px 20px;
-            border-radius: 5px;
-            display: none;
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f7f6;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
         }
-        /* Styling for the container */
-        #container {
-            max-width: 600px; /* Adjust the maximum width as needed */
-            margin: 0 auto; /* Center the container */
-            padding: 20px;
-            border: 1px solid #ccc;
-            border-radius: 10px;
+        .app-container {
+            width: 360px;
+            background: #fff;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            background-color: #f9f9f9;
+            border-radius: 10px;
+            overflow: hidden;
         }
-
-        /* Styling for the list */
-        #animeList {
-            list-style-type: none;
-            padding: 0;
+        .header {
+            background: #007bff;
+            color: #fff;
+            padding: 15px;
+            text-align: center;
         }
-
-        /* Styling for each list item */
-        #animeList li {
-            margin-bottom: 10px;
-            background-color: #fff;
+        .chat-box {
+            border-top: 1px solid #ddd;
+            border-bottom: 1px solid #ddd;
             padding: 10px;
+            height: 400px;
+            overflow-y: auto;
+        }
+        .chat-entry {
+            margin-bottom: 10px;
+            padding: 5px;
             border-radius: 5px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            background: #f1f1f1;
         }
-
-        /* Styling for the links */
-        #animeList li a {
-            text-decoration: none;
-            color: #333;
-            font-weight: bold;
+        .chat-entry.bot {
+            background: #e1f7e7;
         }
-         #social-icons {
-        position: absolute;
-        top: 10px;
-        right: 20px;
-    }
-
-    #social-icons a {
-        margin-left: 10px;
-    }
+        .chat-entry.you {
+            background: #f7e1e1;
+            text-align: right;
+        }
+        .chat-entry audio {
+            margin-top: 5px;
+        }
+        .controls {
+            padding: 10px;
+            display: flex;
+            justify-content: space-around;
+        }
+        .controls button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            background: #007bff;
+            color: #fff;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .controls button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .controls button:hover:not(:disabled) {
+            background: #0056b3;
+        }
     </style>
 </head>
 <body>
-    
-    <h1>Anime Search Engine</h1>
-    <div id="social-icons">
-        <a href="https://www.kaggle.com/itsnobita" target="_blank">
-            <img src="https://www.vectorlogo.zone/logos/kaggle/kaggle-icon.svg" alt="Kaggle" width="30" height="30">
-        </a>
-        <a href="https://www.linkedin.com/in/muhammad-ahmad-698137263/" target="_blank">
-            <img src="https://img.icons8.com/?size=48&id=13930&format=png" alt="LinkedIn" width="30" height="30">
-        </a>
+    <div class="app-container">
+        <div class="header">
+            <h1>Pharma Demo</h1>
+        </div>
+        <div class="chat-box" id="chat-box"></div>
+        <div class="controls">
+            <button id="record-btn" onclick="startRecording()" disabled>Record</button>
+            <button id="stop-btn" onclick="stopRecording()" disabled>Stop</button>
+            <button id="send-btn" onclick="sendRecording()" disabled>Send</button>
+        </div>
+        <audio id="audio-playback" controls style="display: none;"></audio>
     </div>
-    <p>Hello Everyone. Here is a simple Search Engine for Anime Where you just have to describe what type of anime you want to watch <br>Please keep in mind the following points while writing your prompt
-    <ul>
-        <li id="simple">Please prefer to list the main theme of the anime in simple words</li>
-        <li id="simple">If you do not want something like Nudity, Violence in the anime then simply do not mention it in prompt rather than writing it in negation</li>
-        <li id="simple">Please Wait for 2 min after clicking the Submit button As the API is deployed on Free Tier</li>
-        <li id="simple">Note :The data in only limited to 2500 animes only so it does not contain all animes</li>
-    </ul>
-    Here are some Example Prompts 
-    <ol>
-        <li id="simpleexp">I want an anime with intense action, dark themes, and complex characters. It should have mature content and explore the moral ambiguity of its characters and their actions. The anime should contain sex and nudity</li>
-        <li id="simpleexp">I am craving a laid-back anime where ordinary people have extraordinary powers. Show me their daily lives juggling work, relationships, and the occasional alien invasion or demon possession, all with a sprinkle of witty banter and awkward situations.</li>
-        <li id="simpleexp">I am looking for the anime in which male character fall in love with the female character but hide his feelings the anime should have comedy alongside romance</li>
-        <li id="simpleexp">I am looking for a story about pirates and adventure with a comedic twist</li>
-    </ol>
-    </p>
-    <input type="text" id="inputText" placeholder="Enter Your Prompt">
-    <div id="loadingMessage">Loading...</div>
-    <button id="submitButton">Submit</button>
-    <br><br>
-    <div id="container">
-        <ul id="animeList"></ul>
-    </div>
-    <button id="loadMoreButton" style="display:none;">Load More</button> 
 
     <script>
-         var liElements = document.querySelectorAll('li#simpleexp');
-var inputText = document.getElementById('inputText');
-liElements.forEach(function(li) {
-    li.addEventListener('click', function() {
-        inputText.value = this.textContent;
-    });
-});
-        $(document).ready(function(){
-            var currentPage = 1;
-    
-            $('#submitButton').click(function(){
-                var inputText = $('#inputText').val();
-                $('#submitButton').prop('disabled', true);
-                $('#animeList').empty();
-                $('#loadingMessage').show();
-                $.ajax({
-                    type: "POST",
-                    url: "/process",
-                    data: JSON.stringify({text: inputText}),
-                    contentType: "application/json",
-                    success: function(response){
-                        displayAnimeData(response);
-                        $('#loadMoreButton').show().prop('disabled', false); // Show and enable Load More button
-                        currentPage = 2;
-                        $('#submitButton').prop('disabled', false).removeClass('focus');
-                        $('#loadingMessage').hide();
-                    },
-                    error: function(xhr, status, error){
-                        console.error("Error:", error);
-                        $('#submitButton').prop('disabled', false).removeClass('focus');
-                        $('#loadingMessage').hide();
-                    }
-                });
-            });
-    
-            $('#loadMoreButton').click(function(){
-                $(this).prop('disabled', true);
-                $('#loadingMessage').show();
-                $.ajax({
-                    type: "POST",
-                    url: "/process",
-                    data: JSON.stringify({text: $('#inputText').val(), page: currentPage}),
-                    contentType: "application/json",
-                    success: function(response){
-                        $('#loadingMessage').hide();
-                        if (response.trim() === "") {
-                            $('#loadMoreButton').text('No more data').prop('active', true);
-                        } else {
-                            displayAnimeData(response);
-                            currentPage++;
-                            $('#loadMoreButton').prop('active', false); // Enable Load More button after response
-                        }
-                    },
-                    error: function(xhr, status, error){
-                        console.error("Error:", error);
-                        $('#loadingMessage').hide();
-                    }
-                });
-            });
-    
-            function displayAnimeData(data) {
-                var animeList = JSON.parse(data);
-                var $animeList = $('#animeList');
+        let mediaRecorder;
+        let audioChunks = [];
+        let isRecording = false;
+        let awaitingResponse = false;
 
-                animeList.forEach(function(anime) {
-                    var $animeListItem = $('<li>');
-                    var $animeLink = $('<a>').attr('href', anime.Link).attr('target', '_blank').text(anime.Name);
-                    $animeListItem.append($animeLink);
-                    $animeList.append($animeListItem);
-                });
-            }
+        document.addEventListener('DOMContentLoaded', async () => {
+            await requestInitialResponse();
         });
-    </script>
-    
-    
-</body>
 
+        async function requestInitialResponse() {
+            const response = await fetch('/initial_response');
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            displayMessage('Bot', url);
+            document.getElementById('record-btn').disabled = false;
+        }
+
+        function displayMessage(sender, audioUrl) {
+            const chatBox = document.getElementById('chat-box');
+            const chatEntry = document.createElement('div');
+            chatEntry.className = `chat-entry ${sender === 'Bot' ? 'bot' : 'you'}`;
+            chatEntry.innerHTML = `<strong>${sender}:</strong> <audio src="${audioUrl}" controls></audio>`;
+            chatBox.appendChild(chatEntry);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        function startRecording() {
+            if (awaitingResponse) {
+                alert('Please wait for the response from the bot.');
+                return;
+            }
+            navigator.mediaDevices.getUserMedia({ audio: true })
+                .then(stream => {
+                    mediaRecorder = new MediaRecorder(stream);
+                    mediaRecorder.start();
+                    isRecording = true;
+                    audioChunks = [];
+                    mediaRecorder.ondataavailable = event => {
+                        audioChunks.push(event.data);
+                    };
+                    document.getElementById('stop-btn').disabled = false;
+                    document.getElementById('record-btn').disabled = true;
+                });
+        }
+
+        function stopRecording() {
+            if (!isRecording) return;
+            mediaRecorder.stop();
+            isRecording = false;
+            document.getElementById('stop-btn').disabled = true;
+            document.getElementById('send-btn').disabled = false;
+        }
+
+        async function sendRecording() {
+            if (awaitingResponse) {
+                alert('Please wait for the response from the bot.');
+                return;
+            }
+            awaitingResponse = true;
+            const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+            const formData = new FormData();
+            formData.append('audio', audioBlob, 'user_audio.wav');
+
+            const userAudioUrl = URL.createObjectURL(audioBlob);
+            displayMessage('You', userAudioUrl);
+
+            const response = await fetch('/process_audio', {
+                method: 'POST',
+                body: formData
+            });
+            const responseBlob = await response.blob();
+            const responseUrl = URL.createObjectURL(responseBlob);
+            displayMessage('Bot', responseUrl);
+
+            awaitingResponse = false;
+            document.getElementById('record-btn').disabled = false;
+            document.getElementById('send-btn').disabled = true;
+        }
+    </script>
+</body>
 </html>
