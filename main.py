@@ -1,117 +1,104 @@
-from flask import Flask, render_template, request, jsonify
-import pandas as pd
-import json
-import nltk
-nltk.download('stopwords')
-import re
-from nltk.corpus import stopwords
-from flask_cors import CORS
-data=pd.read_csv("refined_data2.csv")
-def slugify(text):
-  text = text.lower().replace(" ", "-")
-
-  text = re.sub(r"[^\w\-]+", "", text)
-
-  text = text.strip("-")
-
-  return text
-def clean_string(input_string, custom_stopwords=None):
-    # Download NLTK stopwords
-    # nltk.download('stopwords')
-
-    # Define a default set of stopwords using NLTK
-    default_stopwords = set(stopwords.words('english'))
-
-    # If custom stopwords are provided, add them to the set
-    if custom_stopwords is not None:
-        default_stopwords.update(custom_stopwords)
-
-    # Remove special characters and convert to lowercase
-    cleaned_string = re.sub(r'[^a-zA-Z0-9\s]', '', input_string).lower()
-
-    # Split the string into words
-    words = cleaned_string.split()
-
-    # Remove stopwords
-    filtered_words = [word for word in words if word not in default_stopwords]
-
-    # Join the filtered words back into a string
-    result_string = ' '.join(filtered_words)
-
-    return result_string
-custom_stopwords = ["anime", "looking", "it","main character","fall"]
-import spacy
-
-# Load the pre-trained word embeddings model
-nlp = spacy.load('en_core_web_md')
-def calculate_similarity(row,prompt):
-    word1 = nlp(prompt)
-    word2=nlp(row)
-    common_keywords = set(token.text.lower() for token in word1 if token.text.lower() in word2.text.lower())
-    custom_similarity = len(common_keywords) / max(len(word1), len(word2))
-
-    return custom_similarity
-# def get_image_address(anime_name):
-   
-#     # Search for the anime name in the dataset and fetch the image address
-#     anime_info =image_data[image_data['Name'] == anime_name]
-#     if not anime_info.empty:
-#         image_address = anime_info.iloc[0]['ImageUrl']
-#         return image_address
-#     else:
-#         return "Image address not found for " + anime_name
-# def get_description(anime_name):
-#     # Search for the anime name in the dataset and fetch the description
-#     anime_info = description_data[description_data['Name'] == anime_name]
-#     if not anime_info.empty:
-#         description = anime_info.iloc[0]['Description']
-#         return description
-#     else:
-#         return ""
-def clean_filename(name):
-    # Remove invalid characters from the file name
-    invalid_chars = {'/', '\\', '?', '%', '*', ':', '|', '"', '<', '>', '.'}
-    return ''.join(char if char not in invalid_chars else '_' for char in name)
-def get_similarity(prompt, page_number=1, items_per_page=10):
-    cleaned_prompt = clean_string(prompt, custom_stopwords)
-    data['similarities'] = data.apply(lambda row: calculate_similarity(row['string_tags'], cleaned_prompt), axis=1)
-    sorted_data = data.sort_values(by='similarities', ascending=False)
-
-    start_index = (page_number - 1) * items_per_page
-    end_index = start_index + items_per_page
-
-    sliced_data = sorted_data.iloc[start_index:end_index]
-
-    anime_list = []
-    for _, row in sliced_data.iterrows():
-        anime_info = {
-            'Name': row['Name'],
-            'Link': 'https://www.anime-planet.com/anime/'+slugify(row['Name'])
-        }
-        anime_list.append(anime_info)
-
-    return json.dumps(anime_list)
-
+import warnings
+warnings.filterwarnings("ignore")
+from langchain_openai import ChatOpenAI
+from langchain_core.prompts import (
+    ChatPromptTemplate,
+    MessagesPlaceholder,
+    SystemMessagePromptTemplate,
+    HumanMessagePromptTemplate,
+)
+from langchain.chains import LLMChain
+from langchain.memory import ConversationBufferMemory
+import whisper
+from openai import OpenAI
+from flask import Flask, request, render_template,jsonify, send_file
+#tacotron2 = Tacotron2.from_hparams(source="speechbrain/tts-tacotron2-ljspeech", savedir="pretrained_models/tts-tacotron2-ljspeech")
+#hifi_gan = HIFIGAN.from_hparams(source="speechbrain/tts-hifigan-ljspeech", savedir="pretrained_model/tts-hifigan-ljspeech")
 app = Flask(__name__)
+client = OpenAI(api_key="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")
+llm= ChatOpenAI(model="gpt-3.5-turbo", temperature=0,openai_api_key="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")
+prompt = ChatPromptTemplate(
+    messages=[
+        SystemMessagePromptTemplate.from_template(
+            """Suppose you are a call agent in a Pharmacy store and your job is to ask the following questions politely one by one to the client.
+            Before asking questions say this introductary line "Hello! This is Julia from SafeHands Pharmacy. Im here to guide you through your medical scripting process." and if client inquires about you tell him the same.
+            Do not say "Thank you" after every question and do not introduce yourself after every question.
+            Here are the questions
+            Question 1: Facility Name
+            Question 2: Patient Name
+            Question 3: Patient Date of Birth
+            Question 4: Script status (it can be either new scrip or amendment to the previous onew)
+            Question 5: Medicines name
+            Question 6: Instruction on using Medicine
+            You have to ask these 5 questions one by one. Start asking first question when user input "Start" and then so on.
+            If client input anything other than a Facility like software house, Law agency etc then reassure the client if it is what they means.
+            If client answer anything irrelavent and answer another queation instead of the one asked then ask the question again.
+            If client wants to change answer of any question at any point ask again that question and resume from where you were before.
+            After Asking about medicine and its instruction ask if the user want to add another medicine data and if user says that he want to add data for multiple medicine then first ask medicine name and then instruction one by one for all medicine.
+            At the end when user has answer all these questions reassure the user about the collected data and ask if he want to correct anything.
+            After client confirm everything is correct extract the collected data and convert the collected data into json format and return that with a flag at start the flag must be "flag:end" and then json in new line.
+            Important note: Ask only one question at a time and wait for user to answer it then ask the next question and use proper punctuations.
+        """
+        ),
+        # The `variable_name` here is what must align with memory
+        MessagesPlaceholder(variable_name="chat_history"),
+        HumanMessagePromptTemplate.from_template("{question}")
+    ]
+)
+memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
+conversation = LLMChain(
+    llm=llm,
+    prompt=prompt,
+    verbose=False,
+    memory=memory
+)
+whispermodel = whisper.load_model("base")
+def transcribe_audio(audio_file):
+    result = whispermodel.transcribe(audio_file)
+    return result['text']
 
-CORS(app)
+def generate_response(query,clear_history=False):
+    if(clear_history==True):
+        memory.clear()
+        responce=conversation({"question": query})
+        return responce['text']
+    else:
+        responce=conversation({"question": query})
+        return responce['text']
+
+def text_to_wav(text, filename):
+    response = client.audio.speech.create(
+    model="tts-1",
+    voice="shimmer",
+    input=text)
+    response.stream_to_file(filename)
 @app.route('/')
 def index():
-    return render_template("index.html")
-current_page = 1
-@app.route('/process', methods=['POST'])
-def process():
-    global current_page
-    data = request.json
-    text = data['text']
-    with open('UserPrompts.txt', 'a') as file:
-    # Write the text to the file
-        file.write(text)
-  
-    jsonData = get_similarity(text, current_page)  # Pass the current page number to the function
-    current_page += 1  # Increment the page number for the next request
-    # print(jsonData)
-    return jsonData
+    return render_template('index.html')
+@app.route('/initial_response', methods=['GET'])
+def initial_response():
+    filename = 'initial_response.wav'
+    predefined_text=generate_response("Start",True)
+    text_to_wav(predefined_text, filename)
+    return send_file(filename, mimetype='audio/wav')
+
+@app.route('/process_audio', methods=['POST'])
+def process_audio():
+    file = request.files['audio']
+    filename = 'user_input.wav'
+    file.save(filename)
+    
+    # Transcribe the audio
+    user_text = transcribe_audio(filename)
+    
+    # Generate the response
+    response_text = generate_response(user_text)
+    
+    # Convert response text to audio
+    response_filename = 'response.wav'
+    text_to_wav(response_text, response_filename)
+    
+    return send_file(response_filename, mimetype='audio/wav')
 
 if __name__ == '__main__':
     app.run(debug=True, port=os.getenv("PORT", default=5000))
